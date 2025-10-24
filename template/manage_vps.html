@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Manage VPS - {{ settings.panel_name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-cog"></i> Manage VPS: <code>{{ vps.container_name }}</code>
+        </h1>
+    </div>
+</div>
+
+<div class="row">
+    <!-- VPS Information -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> VPS Information</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <th>Container Name:</th>
+                        <td><code>{{ vps.container_name }}</code></td>
+                    </tr>
+                    <tr>
+                        <th>Plan:</th>
+                        <td>{{ vps.plan }}</td>
+                    </tr>
+                    <tr>
+                        <th>Processor:</th>
+                        <td>{{ vps.processor }}</td>
+                    </tr>
+                    <tr>
+                        <th>RAM:</th>
+                        <td>{{ vps.ram }}</td>
+                    </tr>
+                    <tr>
+                        <th>CPU:</th>
+                        <td>{{ vps.cpu }} Core(s)</td>
+                    </tr>
+                    <tr>
+                        <th>Storage:</th>
+                        <td>{{ vps.storage }}</td>
+                    </tr>
+                    <tr>
+                        <th>Status:</th>
+                        <td>
+                            {% if vps.status == 'running' %}
+                                <span class="badge bg-success">Running</span>
+                            {% else %}
+                                <span class="badge bg-danger">Stopped</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Created:</th>
+                        <td>{{ vps.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- VPS Controls -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-gamepad"></i> Controls</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success btn-lg" onclick="controlVPS({{ vps.id }}, 'start')">
+                        <i class="fas fa-play"></i> Start VPS
+                    </button>
+                    <button class="btn btn-warning btn-lg" onclick="controlVPS({{ vps.id }}, 'stop')">
+                        <i class="fas fa-stop"></i> Stop VPS
+                    </button>
+                    <button class="btn btn-info btn-lg" onclick="controlVPS({{ vps.id }}, 'restart')">
+                        <i class="fas fa-redo"></i> Restart VPS
+                    </button>
+                    <button class="btn btn-primary btn-lg" onclick="getSSHAccess()">
+                        <i class="fas fa-terminal"></i> SSH Access
+                    </button>
+                    <hr>
+                    <button class="btn btn-danger btn-lg" onclick="deleteVPS({{ vps.id }})">
+                        <i class="fas fa-trash"></i> Delete VPS
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stats %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-line"></i> Resource Usage</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Memory Usage</h6>
+                        <p>{{ stats.memory_mb }} MB</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Status</h6>
+                        <p>{{ stats.status }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row mt-3">
+    <div class="col-12">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- SSH Access Modal -->
+<div class="modal fade" id="sshModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-terminal"></i> SSH Access</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>SSH access is being configured. Please wait...</p>
+                <div class="alert alert-info">
+                    <strong>Note:</strong> SSH via tmate will be configured automatically.
+                    The SSH command will be displayed here once ready.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function controlVPS(vpsId, action) {
+    if (!confirm(`Are you sure you want to ${action} this VPS?`)) {
+        return;
+    }
+
+    fetch(`/api/vps/${vpsId}/${action}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+
+function deleteVPS(vpsId) {
+    if (!confirm('Are you sure you want to DELETE this VPS? This action cannot be undone!')) {
+        return;
+    }
+
+    fetch(`/api/vps/${vpsId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            window.location.href = '/dashboard';
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error: ' + error);
+    });
+}
+
+function getSSHAccess() {
+    var sshModal = new bootstrap.Modal(document.getElementById('sshModal'));
+    sshModal.show();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Users - Admin Panel{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4"><i class="fas fa-users"></i> Manage Users</h1>
+    </div>
+</div>
+
+<!-- Add User Card -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-user-plus"></i> Add New User</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_add_user') }}" class="row g-3">
+                    <div class="col-md-3">
+                        <input type="text" class="form-control" name="username" placeholder="Username" required>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="email" class="form-control" name="email" placeholder="Email" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="password" class="form-control" name="password" placeholder="Password" required>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-select" name="role" required>
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-plus"></i> Add User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users List -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-list"></i> All Users</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Credits</th>
+                                <th>VPS Count</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usr in users %}
+                            <tr>
+                                <td>{{ usr.id }}</td>
+                                <td>{{ usr.username }}</td>
+                                <td>{{ usr.email }}</td>
+                                <td>
+                                    {% if usr.role == 'admin' %}
+                                        <span class="badge bg-danger">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-primary">User</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ usr.credits }}</td>
+                                <td>{{ usr.vps_instances|length }}</td>
+                                <td>{{ usr.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <!-- Credits Management -->
+                                    <button class="btn btn-sm btn-success" 
+                                            onclick="manageCredits({{ usr.id }}, '{{ usr.username }}')">
+                                        <i class="fas fa-coins"></i>
+                                    </button>
+                                    
+                                    <!-- Delete User -->
+                                    {% if usr.id != user.id %}
+                                    <form method="POST" action="{{ url_for('admin_delete_user', user_id=usr.id) }}" 
+                                          style="display: inline;" 
+                                          onsubmit="return confirm('Delete user {{ usr.username }}?');">
+                                        <button type="submit" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <a href="{{ url_for('admin_panel') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Admin Panel
+        </a>
+    </div>
+</div>
+
+<!-- Credits Modal -->
+<div class="modal fade" id="creditsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-coins"></i> Manage Credits</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="creditsForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Action</label>
+                        <select class="form-select" name="action" required>
+                            <option value="add">Add Credits</option>
+                            <option value="remove">Remove Credits</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" class="form-control" name="amount" min="1" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function manageCredits(userId, username) {
+    var modal = new bootstrap.Modal(document.getElementById('creditsModal'));
+    var form = document.getElementById('creditsForm');
+    form.action = '/admin/user/' + userId + '/credits';
+    modal.show();
+}
+</script>
+{% endblock %}

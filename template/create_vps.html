@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Create VPS - {{ settings.panel_name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4"><i class="fas fa-plus-circle"></i> Create VPS</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Select VPS Plan</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Choose Plan</strong></label>
+                        <div class="row">
+                            {% for plan_name, specs in plans.items() %}
+                            <div class="col-md-6 mb-3">
+                                <div class="card plan-card">
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="plan" 
+                                                   id="plan-{{ plan_name }}" value="{{ plan_name }}" required>
+                                            <label class="form-check-label w-100" for="plan-{{ plan_name }}">
+                                                <h5>{{ plan_name }}</h5>
+                                                <hr>
+                                                <p><i class="fas fa-memory"></i> RAM: {{ specs.ram }}</p>
+                                                <p><i class="fas fa-microchip"></i> CPU: {{ specs.cpu }} Core(s)</p>
+                                                <p><i class="fas fa-hdd"></i> Storage: {{ specs.storage }}</p>
+                                                <hr>
+                                                <p class="mb-0">
+                                                    <strong>Intel:</strong> {{ specs.price.Intel }} credits<br>
+                                                    <strong>AMD:</strong> {{ specs.price.AMD }} credits
+                                                </p>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label"><strong>Choose Processor</strong></label>
+                        <div class="btn-group w-100" role="group">
+                            <input type="radio" class="btn-check" name="processor" id="intel" value="Intel" checked>
+                            <label class="btn btn-outline-primary" for="intel">
+                                <i class="fas fa-microchip"></i> Intel
+                            </label>
+
+                            <input type="radio" class="btn-check" name="processor" id="amd" value="AMD">
+                            <label class="btn btn-outline-primary" for="amd">
+                                <i class="fas fa-microchip"></i> AMD
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Your current balance: <strong>{{ user.credits }} credits</strong>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-rocket"></i> Create VPS
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.plan-card {
+    border: 2px solid #e0e0e0;
+    transition: all 0.3s;
+    cursor: pointer;
+}
+.plan-card:hover {
+    border-color: #667eea;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+}
+.form-check-input:checked + .form-check-label .plan-card {
+    border-color: #667eea;
+    background-color: #f8f9ff;
+}
+</style>
+{% endblock %}
